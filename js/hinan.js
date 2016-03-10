@@ -44,15 +44,15 @@ var mask = svg.append("defs").append("mask").attr("id", "mask").append("g");
 var mercator = d3.geo.mercator()
 .center([133.746748, 34.556963])
 .translate([w/2, h/2])
-.scale(200000);
+.scale(130000);
 
 // geojsonからpath要素を作るための設定。
 var geopath = d3.geo.path()
 .projection(mercator);
 
 
-d3.json("kurashiki4.geojson", function(error, kurashiki) {
-	d3.json("kurashiki.geojson", function(error, maskgeo) {
+d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
+	d3.json("src/kurashiki.geojson", function(error, maskgeo) {
 
 		var max = d3.max(kurashiki.features, function(d){
 
@@ -60,12 +60,8 @@ d3.json("kurashiki4.geojson", function(error, kurashiki) {
 		});
 
 		var colorScale = d3.scale.linear().domain([0, max]).range(["#FFE0F0", "#DC143C"]);
-		svg.attr({
-			"x":0,
-			"y":0,
-			"width":w,
-			"height":h
-		})
+
+		var map = svg
 		.append("g")
 		.selectAll("path")
 		.data(kurashiki.features)
@@ -80,7 +76,7 @@ d3.json("kurashiki4.geojson", function(error, kurashiki) {
 		.on("mouseover", function(d){
 			d3.select("#dist").text("町名: " + d.properties.MOJI);
 			d3.select("#address").text("世帯: "+ d.properties.SETAI);
-			d3.select("#name").text("人口: " + d.properties.JINKO);
+			d3.select("#name").text("人口: " + d.properties.JINKO + "人");
 			return d3.select("#tooltip").style("visibility", "visible")
 			.style("background-color", "gray");
 		})
@@ -104,7 +100,7 @@ d3.json("kurashiki4.geojson", function(error, kurashiki) {
 
 
 
-		d3.csv('hinan.csv', function(data){
+		d3.csv('src/hinan.csv', function(data){
 
 
 			//cellを表示するグループを作成
@@ -126,8 +122,8 @@ d3.json("kurashiki4.geojson", function(error, kurashiki) {
 			.append("g");
 
 			//境界表示
-			cell.append("path")
-			.attr("class", "cell")
+			var border = cell.append("path")
+			.attr("class", function(d){ return "cell"+ d.place;})
 			.attr({
 				"d":function(d, i) {
 					if(polygons[i]){
@@ -141,7 +137,7 @@ d3.json("kurashiki4.geojson", function(error, kurashiki) {
 
 
 			//母点表示
-			cell.append("circle")
+			var point = cell.append("circle")
 			.attr({
 				"cx":function(d, i) { return positions[i][0]; },
 				"cy":function(d, i) { return positions[i][1]; },
@@ -159,6 +155,48 @@ d3.json("kurashiki4.geojson", function(error, kurashiki) {
 			.on("mouseout", function(d){
 				return d3.select("#tooltip").style("visibility", "hidden");
 			});
+
+
+
+			//ドラッグイベント設定
+			var drag = d3.behavior.drag().on('drag', function(){
+				var tl = mercator.translate();
+				mercator.translate([tl[0] + d3.event.dx, tl[1] + d3.event.dy]);
+				update();
+			});
+
+			//ズームイベント設定
+			var zoom = d3.behavior.zoom().on('zoom', function(){
+				mercator.scale(130000 * d3.event.scale);
+				update();
+			});
+
+			//イベントをsvg要素に束縛
+			svg.call(zoom);
+			svg.call(drag);
+
+			function update(){
+				//地形(強調用)アップデート
+				map.attr('d', geopath);
+				//地形(マスク)アップデート
+				maskmap.attr('d', geopath);
+				//ボロノイアップデート
+				var positions = [];
+				data.forEach(function(d) {
+					positions.push(mercator([d.lng,d.lat])); //位置情報→ピクセル
+				});
+				var polygons = d3.geom.voronoi(positions);
+				border.attr("d", function(d, i) {
+					if(polygons[i]){
+						return "M" + polygons[i].join("L") + "Z";
+					}
+				});
+				//母点アップデート
+				point.attr({
+					"cx":function(d, i) { return positions[i][0]; },
+					"cy":function(d, i) { return positions[i][1]; }
+				});
+			}
 		});
 	});
 });

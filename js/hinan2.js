@@ -51,9 +51,9 @@ var geopath = d3.geo.path()
 .projection(mercator);
 
 
-d3.json("kurashiki4.geojson", function(error, kurashiki) {
-	d3.json("kurashiki.geojson", function(error, maskgeo) {
-		d3.csv('jinkou2.csv', function(jinkou){
+d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
+	d3.json("src/kurashiki.geojson", function(error, maskgeo) {
+		d3.csv('src/jinkou2.csv', function(jinkou){
 			var max = d3.max(jinkou, function(d){
 
 				return +d["計"];
