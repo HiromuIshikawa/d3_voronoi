@@ -1,6 +1,6 @@
 
 var h = 900;
-var w = 900;
+var w = 1200;
 
 var color = d3.scale.category20();
 //カラースケールを作成
@@ -20,7 +20,7 @@ var tooltip = d3.select("body")
 	"color": "#fff",
 	"font-size": "11px",
 	"opacity": 0.8,
-	"background-color":"#000"
+	"background-color":"#fff"
 })
 
 
@@ -53,12 +53,59 @@ var mask = svg.append("defs").append("mask").attr("id", "mask").append("g");
 // 地理座標から画面表示への投影法の設定。
 var mercator = d3.geo.mercator()
 .center([133.746748, 34.543963])
-.translate([w/2, h/2])
+.translate([(w-300)/2, h/2])
 .scale(160000);
 
 // geojsonからpath要素を作るための設定。
 var geopath = d3.geo.path()
 .projection(mercator);
+
+
+var cityg = svg.append("g")
+.attr({
+	"class":"cityg",
+	"transform":"translate(750,200)"
+});
+
+cityg.append("text")
+.attr({
+	id:"cityname",
+	x:0,
+	y:0,
+	"font-weight":"bold",
+	"font-size":20
+})
+.text("地図上の町をクリック");
+cityg.append("text")
+.attr({
+	x:0,
+	y:30,
+	"font-size":17
+})
+.text("世帯数：");
+cityg.append("text")
+.attr({
+	x:0,
+	y:50,
+	"font-size":17
+})
+.text("人口：");
+
+cityg.append("text")
+.attr({
+	id:"setai",
+	x:60,
+	y:30,
+	"font-size":17
+});
+
+cityg.append("text")
+.attr({
+	id:"jinko",
+	x:60,
+	y:50,
+	"font-size":17
+});
 
 
 d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
@@ -68,8 +115,10 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 
 			return d.properties.JINKO;
 		});
-
+		var colorScale2 = d3.scale.linear().domain([0, max]).range(["rgb(247,251,255)", "rgb(8,48,107)"]);
 		var colorScale = d3.scale.linear().domain([0, max]).range(["#FFE0F0", "#DC143C"]);
+		var sfrag = [];
+		for(var i = 0; i < kurashiki.features.length; i++){ sfrag.push({frag:0});}
 
 		var map = svg
 		.append("g")
@@ -77,23 +126,38 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 		.data(kurashiki.features)
 		.enter().append("path")
 		.attr({
+			"id":function(d,i){return "city"+i;},
 			"d": geopath,
-			"fill": function(d){ return colorScale(d.properties.JINKO)
+			"fill": function(d){ return colorScale2(d.properties.JINKO)
 			},
-			"stroke": "white",
+			"stroke": "gray",
 			"stroke-width":1
 		})
-		.on("mouseover", function(d){
-			d3.select("#dist").text("町名: " + d.properties.MOJI);
-			d3.select("#address").text("世帯数: "+ d.properties.SETAI);
-			d3.select("#name").text("人口: " + d.properties.JINKO + "人");
-			return d3.select("#tooltip").style("visibility", "visible")
-			.style("background-color", "gray");
-		})
-		.on("mousemove", function(d){return d3.select("#tooltip").style("top", (event.pageY+20)+"px").style("left",(event.pageX+10)+"px");})
-		.on("mouseout", function(d){
-			return d3.select("#tooltip").style("visibility", "hidden");
+		.on("click", function(d,i){
+
+			if(sfrag[i].frag == 0){
+				d3.select(this).attr({
+					"stroke":"#696969",
+					"stroke-width":2.5
+				});
+				for(var j=0;j<kurashiki.features.length;j++){
+					if(j==i){continue;}
+					d3.select("#city"+j)
+					.attr({
+						"stroke":"gray",
+						"stroke-width":1
+					});
+					sfrag[j].frag = 0;
+				}
+			}
+			d3.select("#cityname")
+			.text(function(){ return d.properties.MOJI; });
+			d3.select("#setai")
+			.text(function(){ return d.properties.SETAI + "世帯"; });
+			d3.select("#jinko")
+			.text(function(){ return d.properties.JINKO + "人"; });
 		});
+
 
 		//地形(マスク)要素追加
 		var maskmap = mask.append("g")
@@ -152,12 +216,12 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 			.attr({
 				"cx":function(d, i) { return positions[i][0]; },
 				"cy":function(d, i) { return positions[i][1]; },
-				"r":1.5,
-				fill:"#1f3134"
+				"r":2,
+				fill:"#008080"
 			})
 			.on("mouseover", function(d){
 				var dist = ".cell"+d.place;
-				d3.select(dist).attr("fill","rgba(255,255,255,0.7)");
+				d3.select(dist).attr("fill","rgba(0,128,128,0.4)");
 				d3.select(this).attr("fill","red");
 				d3.select("#dist").text("地区:"+d.dist);
 				d3.select("#address").text("住所:"+d.address);
@@ -169,7 +233,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 			.on("mouseout", function(d){
 				var dist = ".cell"+d.place;
 				d3.select(dist).attr("fill","none");
-				d3.select(this).attr("fill","#1f3134");
+				d3.select(this).attr("fill","#008080");
 				return d3.select("#tooltip").style("visibility", "hidden");
 			});
 
@@ -185,19 +249,19 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 
 			grad1.append("stop").attr({
 				"offset":0,
-				"stop-color":"#FFE0F0"
+				"stop-color":"rgb(247,251,255)"
 			});
 			grad1.append("stop").attr({
 				"offset":1,
-				"stop-color":"#DC143C"
+				"stop-color":"rgb(8,48,107)"
 			});
 
-			var legendfont=15;
+			var legendfont=18;
 
 			var legendg = svg.append("g")
 			.attr({
 				"class":"legend",
-				"transform":"translate(30,750)"
+				"transform":"translate(30,680)"
 			});
 
 			legendg.append('circle')
@@ -205,10 +269,10 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 				cx:5,
 				cy:5,
 				r:2,
-				fill:"#1f3134"
+				fill:"#008080"
 			})
 			.on("mouseover",function(d){d3.select(this).attr("fill","red");})
-			.on("mouseout", function(d){d3.select(this).attr("fill","#1f3134");});
+			.on("mouseout", function(d){d3.select(this).attr("fill","#008080");});
 
 
 
@@ -223,7 +287,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 			legendg.append("text")
 			.attr({
 				x:10,
-				y:20,
+				y:22,
 				"dominant-baseline":"middle",
 				"font-size":legendfont-5
 			})
@@ -231,7 +295,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 			legendg.append("text")
 			.attr({
 				x:10,
-				y:31,
+				y:35,
 				"dominant-baseline":"middle",
 				"font-size":legendfont-5
 			})
@@ -240,15 +304,15 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 			legendg.append("text")
 			.attr({
 				x:5,
-				y:60,
+				y:67,
 				"font-size":legendfont
 			})
 			.text("人口");
 
 			legendg.append("rect")
 			.attr({
-				x:40,
-				y:49,
+				x:43,
+				y:53,
 				width:150,
 				height:15,
 				fill:"url(#legendgrad)"
@@ -256,15 +320,15 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 
 			legendg.append("text")
 			.attr({
-				x:35,
-				y:75,
+				x:38,
+				y:80,
 				"font-size":legendfont-5
 			})
 			.text("少");
 			legendg.append("text")
 			.attr({
 				x:185,
-				y:75,
+				y:80,
 				"font-size":legendfont-5
 			})
 			.text("多");
