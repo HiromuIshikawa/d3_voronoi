@@ -331,12 +331,8 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 				.text("多");
 			}
 			function update(){
-				//地形(強調用)アップデート
-				map.attr('d', geopath);
-				//地形(マスク)アップデート
-				maskmap.attr('d', geopath);
+				
 				//ボロノイアップデート
-				var positions = [];
 				data.forEach(function(d) {
 					positions.push(mercator([d.lng,d.lat])); //位置情報→ピクセル
 				});
