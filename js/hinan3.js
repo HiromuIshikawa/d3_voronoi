@@ -330,24 +330,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 				})
 				.text("多");
 			}
-			function update(){
-				
-				//ボロノイアップデート
-				data.forEach(function(d) {
-					positions.push(mercator([d.lng,d.lat])); //位置情報→ピクセル
-				});
-				var polygons = d3.geom.voronoi(positions);
-				border.attr("d", function(d, i) {
-					if(polygons[i]){
-						return "M" + polygons[i].join("L") + "Z";
-					}
-				});
-				//母点アップデート
-				point.attr({
-					"cx":function(d, i) { return positions[i][0]; },
-					"cy":function(d, i) { return positions[i][1]; }
-				});
-			}
+
 
 		});
 	});
