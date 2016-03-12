@@ -115,7 +115,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 		var max = d3.max(kurashiki.features, function(d){
 			return d.properties.JINKO;
 		});
-		
+
 		var colorScale = d3.scale.linear().domain([0, max]).range(["rgb(210,230,255)","rgb(8,48,107)"]);
 		var sfrag = [];
 		for(var i = 0; i < kurashiki.features.length; i++){ sfrag.push({frag:0});}
@@ -185,10 +185,8 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 			data.forEach(function(d) {
 				positions.push(mercator([d.lng,d.lat])); //位置情報→ピクセル
 			});
-
 			//ボロノイ変換関数
 			var polygons = d3.geom.voronoi(positions);
-
 			//ポイントデータをバインディング
 			var cell = cellgroup.selectAll("g")
 			.data(data)
@@ -203,17 +201,17 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 					if(polygons[i]){
 						return "M" + polygons[i].join("L") + "Z";
 					}
+					console.log(d.place)
 				},
 				"stroke":"#43676b",
 				"fill":"none",
 				"mask":"url(#mask)"
 			});
 
-
-
 			//母点表示
 			var point = cell.append("circle")
 			.attr({
+				"class":function(d){ return "circle"+ d.place;},
 				"cx":function(d, i) { return positions[i][0]; },
 				"cy":function(d, i) { return positions[i][1]; },
 				"r":2,
