@@ -9,12 +9,12 @@ body {
 }
 
 svg text {
-  fill: white;
+  fill: #555;
   font-weight:bold;
 }
 
 
 
 h2 {
-  color: white;
+  color: #555;
 }

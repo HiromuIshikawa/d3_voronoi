@@ -5,7 +5,7 @@ var w = 1200;
 var color = d3.scale.category20();
 //カラースケールを作成
 
-
+// tooltip作成
 var tooltip = d3.select("body")
 .append("div")
 .append("span")
@@ -23,7 +23,6 @@ var tooltip = d3.select("body")
 	"background-color":"#fff"
 })
 
-
 tooltip.append("span")
 .attr("id","dist")
 tooltip.append("br")
@@ -33,12 +32,14 @@ tooltip.append("br")
 tooltip.append("span")
 .attr("id","name")
 
+// タイトル作成
 d3.select("body").append("div")
 .attr("id","title");
 
 d3.select("#title")
 .append("h2")
 .text("倉敷市の避難所ボロノイ図及び人口分布");
+
 
 d3.select("body").append("div")
 .attr("id","map");
@@ -94,7 +95,7 @@ cityg.append("text")
 cityg.append("text")
 .attr({
 	id:"setai",
-	x:60,
+	x:100,
 	y:30,
 	"font-size":17
 });
@@ -102,7 +103,7 @@ cityg.append("text")
 cityg.append("text")
 .attr({
 	id:"jinko",
-	x:60,
+	x:100,
 	y:50,
 	"font-size":17
 });
@@ -112,11 +113,10 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 	d3.json("src/kurashiki.geojson", function(error, maskgeo) {
 
 		var max = d3.max(kurashiki.features, function(d){
-
 			return d.properties.JINKO;
 		});
-		var colorScale2 = d3.scale.linear().domain([0, max]).range(["rgb(247,251,255)", "rgb(8,48,107)"]);
-		var colorScale = d3.scale.linear().domain([0, max]).range(["#FFE0F0", "#DC143C"]);
+		
+		var colorScale = d3.scale.linear().domain([0, max]).range(["rgb(210,230,255)","rgb(8,48,107)"]);
 		var sfrag = [];
 		for(var i = 0; i < kurashiki.features.length; i++){ sfrag.push({frag:0});}
 
@@ -128,9 +128,9 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 		.attr({
 			"id":function(d,i){return "city"+i;},
 			"d": geopath,
-			"fill": function(d){ return colorScale2(d.properties.JINKO)
+			"fill": function(d){ return colorScale(d.properties.JINKO)
 			},
-			"stroke": "gray",
+			"stroke": "white",
 			"stroke-width":1
 		})
 		.on("click", function(d,i){
@@ -144,7 +144,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 					if(j==i){continue;}
 					d3.select("#city"+j)
 					.attr({
-						"stroke":"gray",
+						"stroke":"white",
 						"stroke-width":1
 					});
 					sfrag[j].frag = 0;
@@ -237,119 +237,101 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 				return d3.select("#tooltip").style("visibility", "hidden");
 			});
 
+			makeLegend();
 
-			//make legend
+			// 凡例及び説明の記述
 
-			var grad1 =		svg.append("defs")
-			.append("linearGradient")
-			.attr({
-				"id":"legendgrad",
-				//	"gradientUnits":"userSpaceOnUse"
-			});
+			function makeLegend(){
+				//凡例用グラデーション定義
+				var grad1 =		svg.append("defs")
+				.append("linearGradient")
+				.attr("id","legendgrad");
 
-			grad1.append("stop").attr({
-				"offset":0,
-				"stop-color":"rgb(247,251,255)"
-			});
-			grad1.append("stop").attr({
-				"offset":1,
-				"stop-color":"rgb(8,48,107)"
-			});
+				grad1.append("stop").attr({
+					"offset":0,
+					"stop-color":"rgb(210,230,255)"
+				});
+				grad1.append("stop").attr({
+					"offset":1,
+					"stop-color":"rgb(8,48,107)"
+				});
 
-			var legendfont=18;
+				var legendfont=18;
 
-			var legendg = svg.append("g")
-			.attr({
-				"class":"legend",
-				"transform":"translate(30,680)"
-			});
+				var legendg = svg.append("g")
+				.attr({
+					"class":"legend",
+					"transform":"translate(30,700)"
+				});
 
-			legendg.append('circle')
-			.attr({
-				cx:5,
-				cy:5,
-				r:2,
-				fill:"#008080"
-			})
-			.on("mouseover",function(d){d3.select(this).attr("fill","red");})
-			.on("mouseout", function(d){d3.select(this).attr("fill","#008080");});
-
+				legendg.append('circle')
+				.attr({
+					cx:5,
+					cy:5,
+					r:2,
+					fill:"#008080"
+				})
+				.on("mouseover",function(d){d3.select(this).attr("fill","red");})
+				.on("mouseout", function(d){d3.select(this).attr("fill","#008080");});
 
 
-			legendg.append("text")
-			.attr({
-				x:10,
-				y:5,
-				"dominant-baseline":"middle",
-				"font-size":legendfont
-			})
-			.text("：避難所");
-			legendg.append("text")
-			.attr({
-				x:10,
-				y:22,
-				"dominant-baseline":"middle",
-				"font-size":legendfont-5
-			})
-			.text("※マウスオーバーすると避難所の対象地区、名前、住所が表示され、");
-			legendg.append("text")
-			.attr({
-				x:10,
-				y:35,
-				"dominant-baseline":"middle",
-				"font-size":legendfont-5
-			})
-			.text("　 避難所を含むボロノイ領域が強調されます");
+				legendg.append("text")
+				.attr({
+					x:10,
+					y:5,
+					"dominant-baseline":"middle",
+					"font-size":legendfont
+				})
+				.text("：避難所");
+				legendg.append("text")
+				.attr({
+					x:10,
+					y:22,
+					"dominant-baseline":"middle",
+					"font-size":legendfont-5
+				})
+				.text("※マウスオーバーすると避難所の対象地区、名前、住所が表示され、");
+				legendg.append("text")
+				.attr({
+					x:10,
+					y:35,
+					"dominant-baseline":"middle",
+					"font-size":legendfont-5
+				})
+				.text("　 避難所を含むボロノイ領域が強調されます");
 
-			legendg.append("text")
-			.attr({
-				x:5,
-				y:67,
-				"font-size":legendfont
-			})
-			.text("人口");
+				legendg.append("text")
+				.attr({
+					x:5,
+					y:67,
+					"font-size":legendfont
+				})
+				.text("人口");
 
-			legendg.append("rect")
-			.attr({
-				x:43,
-				y:53,
-				width:150,
-				height:15,
-				fill:"url(#legendgrad)"
-			});
+				legendg.append("rect")
+				.attr({
+					x:43,
+					y:53,
+					width:150,
+					height:15,
+					fill:"url(#legendgrad)"
+				});
 
-			legendg.append("text")
-			.attr({
-				x:38,
-				y:80,
-				"font-size":legendfont-5
-			})
-			.text("少");
-			legendg.append("text")
-			.attr({
-				x:185,
-				y:80,
-				"font-size":legendfont-5
-			})
-			.text("多");
-
-			//ドラッグイベント設定
-			var drag = d3.behavior.drag().on('drag', function(){
-				var tl = mercator.translate();
-				mercator.translate([tl[0] + d3.event.dx, tl[1] + d3.event.dy]);
-				update();
-			});
-
-			//ズームイベント設定
-			var zoom = d3.behavior.zoom().on('zoom', function(){
-				mercator.scale(130000 * d3.event.scale);
-				update();
-			});
-
-			//イベントをsvg要素に束縛
-			// svg.call(zoom);
-			// svg.call(drag);
-
+				legendg.append("text")
+				.attr({
+					x:38,
+					y:80,
+					"font-size":legendfont-5
+				})
+				.text("少");
+				legendg.append("text")
+				.attr({
+					x:185,
+					y:80,
+					"font-size":legendfont-5
+				})
+				.text("多");
+			}
 			function update(){
 				//地形(強調用)アップデート
 				map.attr('d', geopath);
@@ -372,6 +354,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 					"cy":function(d, i) { return positions[i][1]; }
 				});
 			}
+
 		});
 	});
 });
