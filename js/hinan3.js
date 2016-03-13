@@ -107,15 +107,92 @@ cityg.append("text")
 	y:50,
 	"font-size":cityfont_size
 });
-
+var simulatef = 0;
 makeLegend();
-
 d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 	d3.json("src/kurashiki.geojson", function(error, maskgeo) {
 		makegeo(kurashiki.features);
 		makemask(maskgeo.features);
 		d3.csv('src/hinan.csv', function(data){
-			makevoronoi(data);
+			//ボロノイ図作成
+			//cellを表示するグループを作成
+			var cellgroup = svg.append("g").attr("id", "cells");
+			//	ポイントデータをバインディング
+			var cell = cellgroup.selectAll("g")
+			var positions = [];
+			data.forEach(function(d) {
+				positions.push(mercator([d.lng,d.lat])); //位置情報→ピクセル
+			});
+
+			var datalength = positions.length
+
+			svg.on("mousemove",function(){if(simulatef){positions[datalength]=d3.mouse(this);redraw();}})
+
+			var polygons = d3.geom.voronoi(positions);
+			cell = cell.data(positions).enter().append("g")
+			// 境界描画
+			var border = cell.append("path").attr("class", function(d,i){
+				return "cell"+ data[i].place;
+			})
+			.attr({
+				"d":function(d,i) {
+					if(d){
+						return "M" + polygons[i].join("L") + "Z";
+					}
+				},
+				"stroke":"#43676b",
+				"fill":"none",
+				"mask":"url(#mask)"
+			});
+
+			cellgroup.append("g").append("path").attr("id","mousearea")
+			.attr({
+				"stroke":"#43676b",
+				"fill":"yellow",
+				"mask":"url(#mask)"
+			});
+			// 避難所点描画
+
+			cell.append("circle")
+			.attr({
+				"class":function(d, i){
+					return "circle"+ data[i].place;
+				},
+				"cx":function(d) { return d[0]; },
+				"cy":function(d) { return d[1]; },
+				"r":2,
+				fill:"#008080"
+			})
+			.on("mouseover", function(d,i){
+				var dist  = ".cell"+ data[i].place;
+				d3.select("#dist").text("地区:"+data[i].dist);
+				d3.select("#address").text("住所:"+data[i].address);
+				d3.select("#name").text("施設名:"+data[i].place);
+				d3.select(dist).attr("fill","rgba(0,128,128,0.4)");
+				d3.select(this).attr("fill","red");
+				return d3.select("#tooltip").style("visibility", "visible")
+				.style("background-color", "black");
+			})
+			.on("mousemove", function(d){return d3.select("#tooltip").style("top", (event.pageY+20)+"px").style("left",(event.pageX+10)+"px");})
+			.on("mouseout", function(d,i){
+				var dist  = ".cell"+ data[i].place;
+				d3.select("#tooltip").style("visibility", "hidden");
+				d3.select(dist).attr("fill","none");
+				d3.select(this).attr("fill","#008080");
+			})
+
+
+			//ボロノイ図描画関数
+			function redraw(){
+
+				//ボロノイアップデート
+				var polygons = d3.geom.voronoi(positions);
+
+				d3.select("#mousearea")
+				.attr("d",function() {return "M" + polygons[datalength].join("L") + "Z";});
+
+				border.attr("d",function(d,i) {return "M" + polygons[i].join("L") + "Z";})
+			}
 		});
 	});
 });
@@ -151,8 +228,8 @@ function makeLegend(){
 		fill:"#008080"
 	})
 	.on("mouseover",function(d){d3.select(this).attr("fill","red");})
-	.on("mouseout", function(d){d3.select(this).attr("fill","#008080");});
-
+	.on("mouseout", function(d){d3.select(this).attr("fill","#008080");})
+	.on("click", function(){simulatef?simulatef=0:simulatef=1});
 
 	legendg.append("text")
 	.attr({
@@ -273,86 +350,5 @@ function makemask(maskdata) {
 		"fill":"white",
 		"stroke": "black",
 		"stroke-width":2
-	});
-}
-//ボロノイ図作成
-function makevoronoi(data){
-	//cellを表示するグループを作成
-	var cellgroup = svg.append("g").attr("id", "cells");
-
-	var positions = [];
-
-	data.forEach(function(d) {
-		positions.push(mercator([d.lng,d.lat])); //位置情報→ピクセル
-	});
-	//ボロノイ変換関数
-	var polygons = d3.geom.voronoi(positions);
-	//ポイントデータをバインディング
-	var cell = cellgroup.selectAll("g")
-	.data(data)
-	.enter()
-	.append("g");
-
-	//境界表示
-	var border = cell.append("path")
-	.attr("class", function(d){ return "cell"+ d.place;})
-	.attr({
-		"d":function(d, i) {
-			if(polygons[i]){
-				return "M" + polygons[i].join("L") + "Z";
-			}
-			console.log(d.place)
-		},
-		"stroke":"#43676b",
-		"fill":"none",
-		"mask":"url(#mask)"
-	});
-
-	//母点表示
-	var point = cell.append("circle")
-	.attr({
-		"class":function(d){ return "circle"+ d.place;},
-		"cx":function(d, i) { return positions[i][0]; },
-		"cy":function(d, i) { return positions[i][1]; },
-		"r":2,
-		fill:"#008080"
-	})
-	.on("mouseover", function(d){
-		var dist = ".cell"+d.place;
-		d3.select(dist).attr("fill","rgba(0,128,128,0.4)");
-		d3.select(this).attr("fill","red");
-		d3.select("#dist").text("地区:"+d.dist);
-		d3.select("#address").text("住所:"+d.address);
-		d3.select("#name").text("施設名:"+d.place);
-		return d3.select("#tooltip").style("visibility", "visible")
-		.style("background-color", "black");
-	})
-	.on("mousemove", function(d){return d3.select("#tooltip").style("top", (event.pageY+20)+"px").style("left",(event.pageX+10)+"px");})
-	.on("mouseout", function(d){
-		var dist = ".cell"+d.place;
-		d3.select(dist).attr("fill","none");
-		d3.select(this).attr("fill","#008080");
-		return d3.select("#tooltip").style("visibility", "hidden");
-	});
-
-}
-
-//ボロノイ図描画関数
-function draw(){
-
-	//ボロノイアップデート
-	data.forEach(function(d) {
-		positions.push(mercator([d.lng,d.lat])); //位置情報→ピクセル
-	});
-	var polygons = d3.geom.voronoi(positions);
-	border.attr("d", function(d, i) {
-		if(polygons[i]){
-			return "M" + polygons[i].join("L") + "Z";
-		}
-	});
-	//母点アップデート
-	point.attr({
-		"cx":function(d, i) { return positions[i][0]; },
-		"cy":function(d, i) { return positions[i][1]; }
 	});
 }
