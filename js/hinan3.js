@@ -238,19 +238,23 @@ function makeLegend(){
 	})
 	.on("mousemove", function(d){return d3.select("#tooltip").style("top", (event.pageY-50)+"px").style("left",(event.pageX-20)+"px");})
 	.on("mouseout", function(d){
-		d3.select(this).attr("fill","#008080");
+		if(!simulatef){
+			d3.select(this).attr("fill","#008080");
+		}
 		d3.select("#tooltip").style("visibility", "hidden");
 	})
 	.on("click", function(){
 		var cellg = d3.selectAll(".cellg")
 		if(simulatef){
+			d3.select("#legendtitle").text("：避難所")
 			d3.select(this).attr("fill","#008080")
 			cellg.select("circle").attr("fill","#008080");
 			cellg.select("path").attr("mask","url(#mask)").attr("fill","none");
 			d3.select("#mousearea").attr("mask","url(#mask)");
 			simulatef = 0;
 		}else{
-			d3.select(this).attr("fill","")
+			d3.select("#legendtitle").text("：避難所 (シミュレーションモード)")
+			d3.select(this).attr("fill","red")
 			cellg.select("circle").attr("fill","red");
 			cellg.select("path").attr("mask","none").attr("fill","rgba(0,128,128,0.4)");
 			d3.select("#mousearea").attr("mask","none");
@@ -261,6 +265,7 @@ function makeLegend(){
 
 	legendg.append("text")
 	.attr({
+		"id":"legendtitle",
 		x:10,
 		y:5,
 		"dominant-baseline":"middle",
