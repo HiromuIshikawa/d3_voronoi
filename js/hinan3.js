@@ -129,7 +129,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 			svg.on("mousemove",function(){if(simulatef){positions[datalength]=d3.mouse(this);redraw();}})
 
 			var polygons = d3.geom.voronoi(positions);
-			cell = cell.data(positions).enter().append("g")
+			cell = cell.data(positions).enter().append("g").attr("class","cellg")
 			// 境界描画
 			var border = cell.append("path").attr("class", function(d,i){
 				return "cell"+ data[i].place;
@@ -145,10 +145,11 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 				"mask":"url(#mask)"
 			});
 
-			cellgroup.append("g").append("path").attr("id","mousearea")
+			cellgroup.append("g")
+			.append("path").attr("id","mousearea")
 			.attr({
 				"stroke":"#43676b",
-				"fill":"yellow",
+				"fill":"none",
 				"mask":"url(#mask)"
 			});
 			// 避難所点描画
@@ -164,21 +165,25 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 				fill:"#008080"
 			})
 			.on("mouseover", function(d,i){
-				var dist  = ".cell"+ data[i].place;
-				d3.select("#dist").text("地区:"+data[i].dist);
-				d3.select("#address").text("住所:"+data[i].address);
-				d3.select("#name").text("施設名:"+data[i].place);
-				d3.select(dist).attr("fill","rgba(0,128,128,0.4)");
-				d3.select(this).attr("fill","red");
-				return d3.select("#tooltip").style("visibility", "visible")
-				.style("background-color", "black");
+				if(!simulatef){
+					var dist  = ".cell"+ data[i].place;
+					d3.select("#dist").text("地区:"+data[i].dist);
+					d3.select("#address").text("住所:"+data[i].address);
+					d3.select("#name").text("施設名:"+data[i].place);
+					d3.select(dist).attr("fill","rgba(0,128,128,0.4)");
+					d3.select(this).attr("fill","red");
+					return d3.select("#tooltip").style("visibility", "visible")
+					.style("background-color", "black");
+				}
 			})
 			.on("mousemove", function(d){return d3.select("#tooltip").style("top", (event.pageY+20)+"px").style("left",(event.pageX+10)+"px");})
 			.on("mouseout", function(d,i){
-				var dist  = ".cell"+ data[i].place;
-				d3.select("#tooltip").style("visibility", "hidden");
-				d3.select(dist).attr("fill","none");
-				d3.select(this).attr("fill","#008080");
+				if(!simulatef){
+					var dist  = ".cell"+ data[i].place;
+					d3.select("#tooltip").style("visibility", "hidden");
+					d3.select(dist).attr("fill","none");
+					d3.select(this).attr("fill","#008080");
+				}
 			})
 
 
@@ -224,9 +229,33 @@ function makeLegend(){
 		r:2,
 		fill:"#008080"
 	})
-	.on("mouseover",function(d){d3.select(this).attr("fill","red");})
-	.on("mouseout", function(d){d3.select(this).attr("fill","#008080");})
-	.on("click", function(){simulatef?simulatef=0:simulatef=1});
+	.on("mouseover",function(d){
+		d3.select(this).attr("fill","red");
+		d3.select("#dist").text("クリックすると新規避難所のシミュレーションができます");
+		d3.select("#address").text("シミュレーションを止める時はもう一度クリック");
+		d3.select("#name").text("");
+		d3.select("#tooltip").style("visibility", "visible").style("background-color", "#008080");
+	})
+	.on("mousemove", function(d){return d3.select("#tooltip").style("top", (event.pageY-50)+"px").style("left",(event.pageX-20)+"px");})
+	.on("mouseout", function(d){
+		d3.select(this).attr("fill","#008080");
+		d3.select("#tooltip").style("visibility", "hidden");
+	})
+	.on("click", function(){
+		var cellg = d3.selectAll(".cellg")
+		if(simulatef){
+			cellg.select("circle").attr("fill","#008080");
+			cellg.select("path").attr("mask","url(#mask)").attr("fill","none");
+			d3.select("#mousearea").attr("mask","url(#mask)");
+			simulatef = 0;
+		}else{
+			cellg.select("circle").attr("fill","red");
+			cellg.select("path").attr("mask","none").attr("fill","rgba(0,128,128,0.4)");
+			d3.select("#mousearea").attr("mask","none");
+
+			simulatef = 1;
+		}
+	});
 
 	legendg.append("text")
 	.attr({
