@@ -113,6 +113,16 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 	d3.json("src/kurashiki.geojson", function(error, maskgeo) {
 		makegeo(kurashiki.features);
 		makemask(maskgeo.features);
+
+
+
+
+
+
+
+
+
+
 		d3.csv('src/hinan.csv', function(data){
 			//ボロノイ図作成
 			//cellを表示するグループを作成
