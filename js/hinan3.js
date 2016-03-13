@@ -244,11 +244,13 @@ function makeLegend(){
 	.on("click", function(){
 		var cellg = d3.selectAll(".cellg")
 		if(simulatef){
+			d3.select(this).attr("fill","#008080")
 			cellg.select("circle").attr("fill","#008080");
 			cellg.select("path").attr("mask","url(#mask)").attr("fill","none");
 			d3.select("#mousearea").attr("mask","url(#mask)");
 			simulatef = 0;
 		}else{
+			d3.select(this).attr("fill","")
 			cellg.select("circle").attr("fill","red");
 			cellg.select("path").attr("mask","none").attr("fill","rgba(0,128,128,0.4)");
 			d3.select("#mousearea").attr("mask","none");
@@ -348,15 +350,6 @@ function makegeo(geodata) {
 				if(j==i){continue;}
 				d3.select("#city"+j)
 				.attr({
-<<<<<<< HEAD
-					x:185,
-					y:80,
-					"font-size":legendfont-5
-				})
-				.text("多");
-			}
-
-=======
 					"stroke":"white",
 					"stroke-width":1
 				});
@@ -370,8 +363,6 @@ function makegeo(geodata) {
 		d3.select("#jinko")
 		.text(function(){ return d.properties.JINKO + "人"; });
 	});
->>>>>>> simulate
-
 }
 //マスク用地図描画
 function makemask(maskdata) {
