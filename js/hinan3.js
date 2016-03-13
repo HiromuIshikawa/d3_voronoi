@@ -188,10 +188,7 @@ d3.json("src/kurashiki4.geojson", function(error, kurashiki) {
 				//ボロノイアップデート
 				var polygons = d3.geom.voronoi(positions);
 
-				d3.select("#mousearea")
-				.attr("d",function() {return "M" + polygons[datalength].join("L") + "Z";});
-
-				border.attr("d",function(d,i) {return "M" + polygons[i].join("L") + "Z";})
+				cellgroup.selectAll("g").select("path").attr("d",function(d,i) {return "M" + polygons[i].join("L") + "Z";})
 			}
 		});
 	});
