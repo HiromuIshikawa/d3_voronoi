@@ -327,7 +327,7 @@ function makegeo(geodata) {
 		return d.properties.JINKO;
 	});
 
-	var colorScale = d3.scale.linear().domain([0, max]).range(["rgb(210,230,255)","rgb(8,48,107)"]);
+	var colorScale = d3.scale.linear().domain([0, max]).range(["rgb(210,230,255)","rgb(8,48,107)"]).interpolate(d3.interpolateLab);
 	var sfrag = [];
 	for(var i = 0; i < geodata.length; i++){ sfrag.push({frag:0});}
 
